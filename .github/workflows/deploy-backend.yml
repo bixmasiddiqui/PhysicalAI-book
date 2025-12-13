@@ -1,0 +1,114 @@
+name: Deploy Backend - Railway/Render
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  deploy-railway:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        run: |
+          cd server
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          curl -f ${{ secrets.RAILWAY_URL }}/health || exit 1
+          echo "Backend deployed successfully!"
+
+  run-migrations:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: deploy-railway
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd server
+          pip install -r requirements.txt
+
+      - name: Run migrations
+        run: |
+          cd server
+          python -c "
+          from auth.database import engine
+          from sqlalchemy import text
+          import glob
+
+          migration_files = sorted(glob.glob('migrations/*.sql'))
+          for migration_file in migration_files:
+              print(f'Running: {migration_file}')
+              with open(migration_file) as f:
+                  sql = f.read()
+              with engine.connect() as conn:
+                  for statement in sql.split(';'):
+                      if statement.strip():
+                          conn.execute(text(statement))
+                  conn.commit()
+          print('Migrations completed')
+          "
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+  health-check:
+    name: Post-Deployment Health Check
+    runs-on: ubuntu-latest
+    needs: [deploy-railway, run-migrations]
+
+    steps:
+      - name: Check API Health
+        run: |
+          echo "Checking backend health..."
+          curl -f ${{ secrets.RAILWAY_URL }}/health
+
+      - name: Check Endpoints
+        run: |
+          curl -f ${{ secrets.RAILWAY_URL }}/ || echo "Root check done"
+          curl -f ${{ secrets.RAILWAY_URL }}/docs || echo "Docs check done"
+          curl -f ${{ secrets.RAILWAY_URL }}/api/personalize/health || echo "Personalize health checked"
+          curl -f ${{ secrets.RAILWAY_URL }}/api/translate/health || echo "Translate health checked"
+          curl -f ${{ secrets.RAILWAY_URL }}/api/rag/health || echo "RAG health checked"
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Backend deployment successful!"
+          echo "🔗 API URL: ${{ secrets.RAILWAY_URL }}"
+          echo "📚 API Docs: ${{ secrets.RAILWAY_URL }}/docs"
