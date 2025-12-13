@@ -17,6 +17,7 @@ from agents.routes import router as agents_router
 from auth.routes import router as auth_router
 from personalize.routes import router as personalize_router
 from translate.routes import router as translate_router  # STEP E
+from rag.routes import router as rag_router  # STEP F
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -81,6 +82,7 @@ app.include_router(agents_router, prefix="/api/agent", tags=["Agents"])
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(personalize_router, prefix="/api", tags=["Personalization"])
 app.include_router(translate_router, prefix="/api", tags=["Translation"])  # STEP E
+app.include_router(rag_router, prefix="/api/rag", tags=["RAG Chatbot"])  # STEP F
 
 if __name__ == "__main__":
     import uvicorn
