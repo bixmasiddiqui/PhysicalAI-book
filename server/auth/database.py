@@ -92,9 +92,10 @@ class TranslationCache(Base):
     __tablename__ = "translation_cache"
 
     id = Column(Integer, primary_key=True, index=True)
-    chapter_id = Column(String, index=True)
-    language = Column(String, index=True)  # 'ur' for Urdu
-    translated_content = Column(String, nullable=False)
+    chapter_id = Column(String(50), index=True, nullable=False)
+    language = Column(String(10), index=True, nullable=False)  # 'urdu' for Urdu
+    content_hash = Column(String(64), index=True, nullable=False)  # MD5 hash for cache invalidation
+    translated_content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     version = Column(Integer, default=1)
