@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(dir \"C:\\Users\\DELL\\OneDrive\\Desktop\\physical-AI\" /B)",
+      "Bash(git -C \"C:\\Users\\DELL\\OneDrive\\Desktop\\physical-AI\" log --oneline)"
+    ]
+  }
+}
