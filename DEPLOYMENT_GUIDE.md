@@ -1,98 +1,531 @@
-# Deployment Guide - Physical AI Textbook
+# Complete Deployment Guide - Physical AI Textbook
 
-**Last Updated:** 2025-12-14
-**Version:** 2.0.0
+**For Beginners - Step by Step**
+
+This guide will walk you through deploying your AI-powered Physical AI & Humanoid Robotics textbook from scratch. No prior deployment experience required!
 
 ---
 
-## 🚀 Deployment Architecture
+## Table of Contents
 
-### Recommended Setup
+1. [What is This Project?](#what-is-this-project)
+2. [Architecture Overview](#architecture-overview)
+3. [Prerequisites](#prerequisites)
+4. [Getting API Keys (Critical Step)](#getting-api-keys)
+5. [Local Development Setup](#local-development-setup)
+6. [Deploying to Production](#deploying-to-production)
+7. [Common Errors & Solutions](#common-errors--solutions)
+8. [Security Best Practices](#security-best-practices)
+9. [Cost Breakdown](#cost-breakdown)
+
+---
+
+## What is This Project?
+
+This is an **AI-native interactive textbook** about Physical AI and Humanoid Robotics with these features:
+
+- 📚 **10 Comprehensive Chapters** - Complete learning material
+- 🤖 **RAG Chatbot** - Ask questions about any chapter
+- ✨ **Personalization** - Content adapts to your skill level
+- 🌐 **Urdu Translation** - Multilingual support
+- 💬 **Smart UI** - Highlight text and ask questions
+
+**Technology Stack:**
+- Frontend: Docusaurus (React-based static site)
+- Backend: FastAPI (Python web framework)
+- Database: PostgreSQL (user data, chat history)
+- Vector Database: Qdrant (for AI search)
+- AI: OpenAI GPT-4 or Google Gemini
+
+---
+
+## Architecture Overview
 
 ```
-┌─────────────────────────────────────────┐
-│          User's Browser                 │
-└────────────┬────────────────────────────┘
-             │
-             ├─────────────┐
-             │             │
-    ┌────────▼──────┐  ┌──▼──────────────┐
-    │  Vercel       │  │  Railway/Render │
-    │  (Frontend)   │  │  (Backend)      │
-    │               │  │                 │
-    │  Docusaurus   │  │  FastAPI        │
-    │  React        │  │  Python 3.11    │
-    └───────────────┘  └─────────┬───────┘
-                                 │
-                     ┌───────────┴─────────────┐
-                     │                         │
-              ┌──────▼──────┐           ┌──────▼──────┐
-              │  Neon       │           │  Qdrant     │
-              │  (Postgres) │           │  (Vectors)  │
-              └─────────────┘           └─────────────┘
+┌─────────────────────────────────────────────────┐
+│              USER'S BROWSER                     │
+└──────────────────┬──────────────────────────────┘
+                   │
+         ┌─────────┴─────────┐
+         │                   │
+    ┌────▼─────┐      ┌─────▼──────┐
+    │ FRONTEND │      │  BACKEND   │
+    │ (Vercel/ │      │ (Railway/  │
+    │  GitHub  │      │  Render)   │
+    │  Pages)  │      │            │
+    └──────────┘      └──────┬─────┘
+                             │
+                   ┌─────────┴──────────┐
+                   │                    │
+            ┌──────▼─────┐     ┌───────▼────────┐
+            │ PostgreSQL │     │ Qdrant Vector  │
+            │  Database  │     │    Database    │
+            │   (Neon)   │     │   (Qdrant.io)  │
+            └────────────┘     └────────────────┘
 ```
 
-**Services:**
-- **Frontend:** Vercel (or GitHub Pages)
-- **Backend:** Railway (or Render)
-- **Database:** Neon Serverless Postgres
-- **Vector DB:** Qdrant Cloud
-- **LLM:** Claude API / OpenAI API
+### Important Note: Dual Backend Architecture
+
+This project has **TWO separate backends** (historical artifact from development):
+
+1. **`/rag/api/main.py`** - Simple RAG chatbot backend (older, simpler)
+2. **`/server/main.py`** - Full-featured backend (newer, recommended)
+
+**For deployment, you should use `/server/main.py`** as it includes:
+- Authentication
+- Personalization
+- Translation
+- RAG chatbot
+- All features integrated
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
-### Required Accounts
+### Software Requirements
 
-1. **GitHub** - Source code hosting
-2. **Vercel** - Frontend deployment (free tier)
-3. **Railway** - Backend deployment (free tier: $5 credit/month)
-4. **Neon** - Serverless Postgres (free tier: 1 project)
-5. **Qdrant Cloud** - Vector database (free tier: 1GB)
-6. **Anthropic** - Claude API (pay-as-you-go)
-7. **OpenAI** - GPT API (pay-as-you-go, optional)
+Before starting, install these on your computer:
+
+| Software | Version | Download Link | Why You Need It |
+|----------|---------|---------------|-----------------|
+| **Node.js** | 18+ | [nodejs.org](https://nodejs.org/) | Runs the frontend |
+| **Python** | 3.9+ | [python.org](https://www.python.org/) | Runs the backend |
+| **Git** | Latest | [git-scm.com](https://git-scm.com/) | Version control |
+| **Text Editor** | Any | [VSCode](https://code.visualstudio.com/) (recommended) | Edit code |
+
+### Cloud Accounts Needed (All FREE Tiers Available)
+
+| Service | Purpose | Free Tier | Sign Up Link |
+|---------|---------|-----------|--------------|
+| **GitHub** | Code hosting | ✅ Unlimited public repos | [github.com](https://github.com/signup) |
+| **Vercel** | Frontend hosting | ✅ 100GB bandwidth/month | [vercel.com](https://vercel.com/signup) |
+| **Railway** | Backend hosting | ✅ $5 free credit/month | [railway.app](https://railway.app/) |
+| **Neon** | PostgreSQL database | ✅ 1 free project | [neon.tech](https://neon.tech/) |
+| **Qdrant Cloud** | Vector database | ✅ 1GB storage | [cloud.qdrant.io](https://cloud.qdrant.io/) |
+| **OpenAI** or **Google** | AI provider | ⚠️ Pay-as-you-go | [platform.openai.com](https://platform.openai.com/) |
 
 ---
 
-## 🔧 Step 1: Setup Third-Party Services
+## Getting API Keys
 
-### 1.1 Neon Postgres Database
+### ⚠️ CRITICAL SECURITY WARNING
 
-1. Sign up at https://neon.tech
-2. Create new project: "physical-ai-textbook"
-3. Copy connection string:
+**NEVER, EVER:**
+- ❌ Commit API keys to Git
+- ❌ Share API keys publicly
+- ❌ Hardcode keys in your code
+- ❌ Post keys in screenshots or videos
+
+**ALWAYS:**
+- ✅ Store keys in `.env` files (which are `.gitignore`d)
+- ✅ Use environment variables in deployment platforms
+- ✅ Rotate keys if accidentally exposed
+- ✅ Set spending limits on API accounts
+
+---
+
+### Option 1: OpenAI API Key (Recommended, More Features)
+
+**What you get:** GPT-4, embeddings, full RAG chatbot, personalization, translation
+
+**Cost:** ~$0.50-2.00 per day for moderate testing (you control spending limits)
+
+**Steps:**
+
+1. **Go to** [platform.openai.com](https://platform.openai.com/)
+2. **Sign up** or log in
+3. **Click** your profile → "View API keys"
+4. **Click** "Create new secret key"
+5. **Name it** something like "physical-ai-textbook"
+6. **Copy the key** (starts with `sk-...`) - **You'll only see this once!**
+7. **Save it** somewhere safe temporarily (we'll add it to `.env` later)
+8. **Add credits:**
+   - Click "Settings" → "Billing"
+   - Add $10-20 to start
+   - Set a **spending limit** (e.g., $5/month) to avoid surprises
+
+**What it costs:**
+- Embeddings: ~$0.10 per 1000 pages
+- GPT-4 queries: ~$0.01-0.03 per question
+- **Total for testing:** $5-10 should last weeks
+
+---
+
+### Option 2: Google Gemini API Key (Free Tier, Limited Features)
+
+**What you get:** Basic chatbot (no full RAG, limited personalization)
+
+**Cost:** FREE up to 60 requests/minute
+
+**Steps:**
+
+1. **Go to** [ai.google.dev](https://ai.google.dev/)
+2. **Click** "Get API key in Google AI Studio"
+3. **Sign in** with Google account
+4. **Click** "Create API Key"
+5. **Copy the key** - Save it safely
+6. **Note:** Free tier has rate limits (60 requests/min)
+
+**Limitations:**
+- No embeddings → No semantic search
+- Simpler chatbot (no document context)
+- Good for: Testing the UI and basic functionality
+
+---
+
+### Database Setup
+
+#### 1. Neon PostgreSQL (FREE)
+
+**Why:** Stores user profiles, chat history, personalization cache
+
+**Steps:**
+
+1. **Go to** [neon.tech](https://neon.tech/)
+2. **Sign up** with GitHub (easiest)
+3. **Create new project:**
+   - Name: `physical-ai-textbook`
+   - Region: Choose closest to you
+4. **Get connection string:**
+   - Click "Connection Details"
+   - Copy the string that looks like:
+     ```
+     postgresql://username:password@ep-xyz-123.us-east-2.aws.neon.tech/neondb?sslmode=require
+     ```
+5. **Save it** - We'll add it to `.env` as `DATABASE_URL`
+
+**Important:** The free tier includes 1 project with 0.5GB storage (plenty for this project).
+
+---
+
+#### 2. Qdrant Vector Database (FREE)
+
+**Why:** Stores document embeddings for semantic search (RAG chatbot)
+
+**Steps:**
+
+1. **Go to** [cloud.qdrant.io](https://cloud.qdrant.io/)
+2. **Sign up** (email or GitHub)
+3. **Create cluster:**
+   - Name: `physical-ai-rag`
+   - Region: Choose closest to you
+   - Plan: Free tier (1GB)
+4. **Get credentials:**
+   - Click on your cluster
+   - Copy **Cluster URL** (looks like `https://xyz-abc.qdrant.io`)
+   - Click "API Keys" → Copy the API key
+5. **Save both** - We'll add them to `.env`
+
+---
+
+## Local Development Setup
+
+### Step 1: Clone the Repository
+
+```bash
+# Open terminal/command prompt
+cd Desktop  # or wherever you want the project
+
+# Clone the repo (replace with your fork if you made one)
+git clone https://github.com/your-username/physical-AI.git
+cd physical-AI
+```
+
+---
+
+### Step 2: Install Frontend Dependencies
+
+```bash
+# Make sure you're in the project root
+npm install
+```
+
+**This installs:** Docusaurus, React, and all frontend packages.
+
+**Expected output:**
+```
+added 1234 packages in 45s
+```
+
+**If errors occur:**
+- Make sure Node.js 18+ is installed: `node --version`
+- Delete `node_modules` and `package-lock.json`, then try again
+
+---
+
+### Step 3: Install Backend Dependencies
+
+```bash
+# Navigate to server directory
+cd server
+
+# Install Python packages
+pip install -r requirements.txt
+
+# Go back to project root
+cd ..
+```
+
+**This installs:** FastAPI, OpenAI SDK, database drivers, etc.
+
+**Expected output:**
+```
+Successfully installed fastapi-0.109.0 uvicorn-0.27.0 ...
+```
+
+**If errors occur:**
+- Make sure Python 3.9+ is installed: `python --version`
+- On Windows, try `python -m pip install -r requirements.txt`
+- On Mac/Linux, you might need `pip3` instead of `pip`
+
+---
+
+### Step 4: Create Environment File
+
+```bash
+# Copy the example file
+cp server/.env.example server/.env
+
+# Open server/.env in your text editor
+```
+
+**Edit `server/.env` and add your API keys:**
+
+```env
+# ==================== DATABASE ====================
+# Use SQLite for local development (no setup needed)
+DATABASE_URL=sqlite:///./physical_ai.db
+
+# For production, use your Neon connection string:
+# DATABASE_URL=postgresql://user:pass@ep-xyz.neon.tech/neondb?sslmode=require
+
+# ==================== AUTHENTICATION ====================
+JWT_SECRET=change-this-to-a-random-string-in-production
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_DAYS=7
+
+# ==================== LLM API KEYS ====================
+# Option 1: OpenAI (Recommended - Full features)
+OPENAI_API_KEY=sk-your-openai-key-here
+
+# Option 2: Google Gemini (Free tier - Basic features)
+# GEMINI_API_KEY=your-gemini-key-here
+
+# ==================== VECTOR DATABASE ====================
+# Qdrant Cloud credentials (from earlier setup)
+QDRANT_URL=https://your-cluster.qdrant.io
+QDRANT_API_KEY=your-qdrant-api-key
+
+# ==================== FEATURE FLAGS ====================
+DEMO_MODE=false
+FEATURE_TRANSLATION=true
+FEATURE_PERSONALIZATION=true
+FEATURE_RAG_CHAT=true
+
+# ==================== CORS ====================
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+```
+
+**Security reminder:**
+- The `server/.env` file is already in `.gitignore`
+- Never commit this file to Git
+- Keep your API keys secret!
+
+---
+
+### Step 5: Initialize the Database
+
+```bash
+cd server
+python -c "from auth.database import init_db; init_db()"
+cd ..
+```
+
+**This creates:** Database tables for users, chat history, and cache.
+
+**Expected output:**
+```
+Database initialized successfully
+Created tables: users, chat_history, personalization_cache
+```
+
+---
+
+### Step 6: Run the Project Locally
+
+You need **TWO terminal windows** open:
+
+**Terminal 1 - Backend:**
+```bash
+cd server
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Expected output:**
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000
+INFO:     Application startup complete.
+```
+
+**Keep this running!**
+
+---
+
+**Terminal 2 - Frontend:**
+```bash
+# From project root
+npm start
+```
+
+**Expected output:**
+```
+Starting development server...
+Docusaurus website running at http://localhost:3000
+```
+
+---
+
+### Step 7: Test Locally
+
+1. **Open browser:** [http://localhost:3000](http://localhost:3000)
+2. **You should see:** The homepage with hero section
+3. **Navigate to:** "Start Reading" → Any chapter
+4. **Test chatbot:** Look for the 💬 floating button (bottom-right)
+5. **Click it** and ask: "What is Physical AI?"
+6. **You should get** an AI-powered response
+
+**If chatbot doesn't work:**
+- Check backend is running (terminal 1 should show no errors)
+- Check browser console (F12) for errors
+- Verify API keys are correctly set in `.env`
+
+---
+
+## Deploying to Production
+
+Now that it works locally, let's deploy it to the internet!
+
+---
+
+### Part 1: Deploy Frontend to Vercel
+
+**Why Vercel?** It's the easiest way to deploy Docusaurus sites. Free tier is generous.
+
+**Steps:**
+
+1. **Push code to GitHub** (if you haven't already):
+   ```bash
+   git add .
+   git commit -m "Initial commit"
+   git push origin main
    ```
-   postgresql://user:password@ep-xxx.neon.tech/neondb?sslmode=require
-   ```
-4. Save as `DATABASE_URL`
 
-### 1.2 Qdrant Vector Database
+2. **Go to** [vercel.com](https://vercel.com/)
 
-1. Sign up at https://cloud.qdrant.io
-2. Create cluster: "physical-ai-rag"
-3. Get API credentials:
-   - URL: `https://xxx.qdrant.io:6333`
-   - API Key: `your-api-key`
-4. Save as `QDRANT_URL` and `QDRANT_API_KEY`
+3. **Sign in** with GitHub
 
-### 1.3 Claude API
+4. **Click** "Add New Project"
 
-1. Sign up at https://console.anthropic.com
-2. Generate API key
-3. Save as `CLAUDE_API_KEY`
+5. **Import** your `physical-AI` repository
 
-### 1.4 OpenAI API (Optional)
+6. **Configure:**
+   - Framework Preset: **Docusaurus**
+   - Build Command: `npm run build`
+   - Output Directory: `build`
+   - Root Directory: `./` (leave default)
 
-1. Sign up at https://platform.openai.com
-2. Generate API key
-3. Save as `OPENAI_API_KEY`
+7. **Environment Variables:**
+   - Click "Environment Variables"
+   - Add: `REACT_APP_API_URL` = `https://your-backend-url.railway.app`
+   - (You'll get this URL in the next step - you can add it later)
+
+8. **Click** "Deploy"
+
+9. **Wait** 2-3 minutes for build to complete
+
+10. **Get your URL:** Something like `https://physical-ai-abc123.vercel.app`
+
+**Note:** Don't worry if the chatbot doesn't work yet - we haven't deployed the backend!
 
 ---
 
-## 🖥️ Step 2: Deploy Backend to Railway
+### Part 2: Deploy Backend to Railway
 
-### Option A: Using Railway CLI (Recommended)
+**Why Railway?** Offers $5 free credit/month, supports Python, easy PostgreSQL setup.
+
+**Steps:**
+
+1. **Go to** [railway.app](https://railway.app/)
+
+2. **Sign in** with GitHub
+
+3. **Click** "New Project"
+
+4. **Select** "Deploy from GitHub repo"
+
+5. **Choose** your `physical-AI` repository
+
+6. **Configure:**
+   - Click "Add Service" → "GitHub Repo"
+   - Root Directory: `server`
+   - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+7. **Add Environment Variables:**
+   Click "Variables" tab and add ALL of these:
+
+   ```env
+   DATABASE_URL=<your-neon-connection-string>
+   OPENAI_API_KEY=<your-openai-key>
+   QDRANT_URL=<your-qdrant-url>
+   QDRANT_API_KEY=<your-qdrant-key>
+   JWT_SECRET=<generate-random-string>
+   ALLOWED_ORIGINS=https://your-vercel-url.vercel.app,http://localhost:3000
+   DEMO_MODE=false
+   FEATURE_TRANSLATION=true
+   FEATURE_PERSONALIZATION=true
+   FEATURE_RAG_CHAT=true
+   PORT=8000
+   ```
+
+8. **Generate JWT_SECRET:**
+   ```bash
+   python -c "import secrets; print(secrets.token_urlsafe(32))"
+   ```
+   Copy the output and paste as `JWT_SECRET`
+
+9. **Click** "Deploy"
+
+10. **Get your backend URL:**
+    - Click "Settings" → "Networking"
+    - Copy the public URL (e.g., `https://physical-ai-production.up.railway.app`)
+
+11. **Go back to Vercel:**
+    - Open your Vercel project
+    - Settings → Environment Variables
+    - Edit `REACT_APP_API_URL` to your Railway URL
+    - Click "Redeploy"
+
+---
+
+### Part 3: Update CORS Settings
+
+Now that you have both URLs, update the backend CORS settings:
+
+1. **In Railway:**
+   - Go to Variables
+   - Update `ALLOWED_ORIGINS` to include your Vercel URL:
+     ```
+     https://your-app.vercel.app,http://localhost:3000
+     ```
+   - Click "Save" and redeploy
+
+---
+
+### Part 4: Embed Documents (One-Time Setup)
+
+Your chatbot needs to know about your textbook content. Let's embed it:
+
+**Option 1: Using Railway CLI**
 
 ```bash
 # Install Railway CLI
@@ -101,415 +534,362 @@ npm install -g @railway/cli
 # Login
 railway login
 
-# Initialize project
-railway init
-
-# Link to GitHub repo
+# Link to your project
 railway link
 
-# Set environment variables
-railway variables set DATABASE_URL="postgresql://..."
-railway variables set CLAUDE_API_KEY="sk-ant-..."
-railway variables set OPENAI_API_KEY="sk-..."
-railway variables set QDRANT_URL="https://..."
-railway variables set QDRANT_API_KEY="..."
-railway variables set JWT_SECRET="your-secret-key-here"
-railway variables set LLM_PROVIDER="claude"
-
-# Deploy
-railway up
-```
-
-### Option B: Using Railway Dashboard
-
-1. Go to https://railway.app
-2. Click "New Project" → "Deploy from GitHub"
-3. Select your repository
-4. Configure:
-   - **Root Directory:** `server`
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
-5. Add environment variables (see above)
-6. Deploy
-
-### Verify Backend Deployment
-
-```bash
-# Check health endpoint
-curl https://your-railway-app.railway.app/health
-
-# Check API docs
-open https://your-railway-app.railway.app/docs
-```
-
----
-
-## 🌐 Step 3: Deploy Frontend to Vercel
-
-### Option A: Using Vercel CLI
-
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Login
-vercel login
-
-# Deploy
-vercel
-
-# Set environment variable
-vercel env add REACT_APP_API_URL production
-# Enter: https://your-railway-app.railway.app
-
-# Deploy to production
-vercel --prod
-```
-
-### Option B: Using Vercel Dashboard
-
-1. Go to https://vercel.com
-2. Click "New Project"
-3. Import your GitHub repository
-4. Configure:
-   - **Framework Preset:** Docusaurus
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `build`
-5. Add environment variables:
-   - `REACT_APP_API_URL` = `https://your-railway-app.railway.app`
-6. Deploy
-
-### Verify Frontend Deployment
-
-```bash
-# Open in browser
-open https://your-project.vercel.app
-```
-
----
-
-## 📊 Step 4: Run Database Migrations
-
-```bash
-# SSH into Railway container (or run locally with production DATABASE_URL)
-cd server
-
-python -c "
-from auth.database import engine, init_db
-from sqlalchemy import text
-import glob
-
-# Create tables
-init_db()
-
-# Run migrations
-migration_files = sorted(glob.glob('migrations/*.sql'))
-for migration_file in migration_files:
-    print(f'Running migration: {migration_file}')
-    with open(migration_file) as f:
-        sql = f.read()
-    with engine.connect() as conn:
-        for statement in sql.split(';'):
-            if statement.strip():
-                conn.execute(text(statement))
-        conn.commit()
-
-print('✅ Migrations completed')
-"
-```
-
----
-
-## 🤖 Step 5: Populate Vector Database (RAG)
-
-```bash
-cd rag
-
-# Set environment variables
-export QDRANT_URL="https://..."
-export QDRANT_API_KEY="..."
-export OPENAI_API_KEY="sk-..."
-
 # Run embedding script
-python embed_docs.py
-
-# Verify
-# You should see:
-# Processing 100+ chunks from 10 documents
-# ✅ Embedding Complete
+railway run python -c "from rag.routes import embed_all_documents; import asyncio; asyncio.run(embed_all_documents('../docs'))"
 ```
 
----
-
-## 🔐 Step 6: Configure GitHub Secrets
-
-Go to your GitHub repository → Settings → Secrets and variables → Actions
-
-Add the following secrets:
-
-### Backend (Railway)
-- `RAILWAY_TOKEN` - From https://railway.app/account/tokens
-- `RAILWAY_PROJECT_ID` - From Railway dashboard
-- `RAILWAY_URL` - Your Railway app URL
-
-### Frontend (Vercel)
-- `VERCEL_TOKEN` - From https://vercel.com/account/tokens
-- `VERCEL_ORG_ID` - From Vercel dashboard
-- `VERCEL_PROJECT_ID` - From Vercel dashboard
-
-### Database & APIs
-- `DATABASE_URL` - Neon connection string
-- `QDRANT_URL` - Qdrant cluster URL
-- `QDRANT_API_KEY` - Qdrant API key
-- `CLAUDE_API_KEY` - Anthropic API key
-- `OPENAI_API_KEY` - OpenAI API key
-- `JWT_SECRET` - Random secret key (generate with `openssl rand -hex 32`)
-
-### URLs
-- `BACKEND_URL` - Railway app URL
-- `FRONTEND_URL` - Vercel app URL
-
----
-
-## ✅ Step 7: Verify Deployment
-
-### Backend Health Checks
+**Option 2: Using API Endpoint**
 
 ```bash
-BACKEND_URL="https://your-railway-app.railway.app"
-
-# Overall health
-curl $BACKEND_URL/health
-
-# API documentation
-open $BACKEND_URL/docs
-
-# Module health checks
-curl $BACKEND_URL/api/personalize/health
-curl $BACKEND_URL/api/translate/health
-curl $BACKEND_URL/api/rag/health
+curl -X POST https://your-backend.railway.app/api/rag/embed \
+  -H "Content-Type: application/json" \
+  -d '{"docs_path": "./docs"}'
 ```
 
-### Frontend Verification
+**This will:**
+- Load all 10 chapters
+- Split them into chunks
+- Create embeddings using OpenAI
+- Store in Qdrant
 
-1. Open https://your-project.vercel.app
-2. Navigate to a chapter
-3. Test features:
-   - ✅ Sign up / Login
-   - ✅ Personalize chapter
-   - ✅ Translate to Urdu
-   - ✅ Chat with AI (if RAG enabled)
+**Expected time:** 2-5 minutes
+**Cost:** ~$0.50-1.00 (one-time)
 
 ---
 
-## 🔄 Step 8: Setup CI/CD (Automated)
+### Part 5: Test Production Deployment
 
-CI/CD is already configured via GitHub Actions!
+1. **Visit** your Vercel URL: `https://your-app.vercel.app`
+2. **Navigate** to any chapter
+3. **Click** the 💬 chatbot button
+4. **Ask** a question
+5. **Verify** you get a response with sources
 
-### Workflows
+**Success checklist:**
+- ✅ Homepage loads
+- ✅ Chapters are readable
+- ✅ Chatbot button appears
+- ✅ Chatbot responds to questions
+- ✅ Sources are cited
 
-1. **`.github/workflows/ci.yml`** - Runs on every push/PR
-   - Backend tests (Python)
-   - Frontend tests (Node.js)
-   - Security scanning
-   - Docker build
-   - Code quality checks
+---
 
-2. **`.github/workflows/deploy-backend.yml`** - Deploys backend on push to `main`
-   - Deploys to Railway
-   - Runs migrations
-   - Health checks
+## Common Errors & Solutions
 
-3. **`.github/workflows/deploy.yml`** - Deploys frontend to GitHub Pages
+### Frontend Errors
 
-### Trigger Deployments
+#### Error: "Failed to fetch" when using chatbot
 
+**Cause:** Backend not running or CORS misconfigured
+
+**Solution:**
+1. Check backend is running: Visit `https://your-backend.railway.app/health`
+2. Should return: `{"status": "ok"}`
+3. If not, check Railway logs for errors
+4. Verify `ALLOWED_ORIGINS` includes your Vercel URL
+
+---
+
+#### Error: "Module not found"
+
+**Cause:** Dependencies not installed
+
+**Solution:**
 ```bash
-# Push to main branch triggers automatic deployment
-git push origin main
-
-# Or manually trigger via GitHub Actions UI
+rm -rf node_modules package-lock.json
+npm install
 ```
 
 ---
 
-## 🐛 Troubleshooting
+### Backend Errors
 
-### Backend Won't Start
+#### Error: "Connection refused" to Qdrant
 
-**Problem:** Railway deployment fails
+**Cause:** Wrong Qdrant URL or API key
 
-**Solutions:**
-1. Check logs in Railway dashboard
-2. Verify all environment variables are set
-3. Check Python version (must be 3.10 or 3.11)
-4. Verify `requirements.txt` has all dependencies
-
-```bash
-# Test locally first
-cd server
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
-
-### Database Connection Fails
-
-**Problem:** `connection to server failed`
-
-**Solutions:**
-1. Check `DATABASE_URL` format (must include `?sslmode=require` for Neon)
-2. Verify IP allowlist in Neon (set to `0.0.0.0/0` for Railway)
-3. Test connection:
-
-```bash
-psql "postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require"
-```
-
-### LLM API Errors
-
-**Problem:** `Anthropic API error: 401 Unauthorized`
-
-**Solutions:**
-1. Verify API key is correct
-2. Check API key has sufficient credits
-3. Test API key:
-
-```bash
-curl https://api.anthropic.com/v1/messages \
-  -H "x-api-key: $CLAUDE_API_KEY" \
-  -H "anthropic-version: 2023-06-01" \
-  -H "content-type: application/json" \
-  -d '{"model": "claude-3-5-sonnet-20241022", "max_tokens": 10, "messages": [{"role": "user", "content": "Hi"}]}'
-```
-
-### Frontend API Calls Fail
-
-**Problem:** CORS errors or 404 on `/api/*`
-
-**Solutions:**
-1. Verify `REACT_APP_API_URL` is set correctly in Vercel
-2. Check CORS settings in `server/main.py`:
-
-```python
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://your-project.vercel.app"],  # Add your domain
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
-
-3. Redeploy backend after changing CORS
+**Solution:**
+1. Go to Qdrant Cloud dashboard
+2. Verify cluster is running (not paused)
+3. Copy URL again - make sure it's HTTPS
+4. Regenerate API key if needed
+5. Update environment variables in Railway
 
 ---
 
-## 📊 Monitoring & Logs
+#### Error: "Invalid API key" for OpenAI
 
-### Railway Logs
+**Cause:** Wrong key or insufficient credits
 
-```bash
-# View live logs
-railway logs
+**Solution:**
+1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Verify key is active
+3. Check billing: Settings → Billing → Add credits
+4. Regenerate key if needed
+5. Update environment variable in Railway
 
-# Or in dashboard: https://railway.app → Your Project → Deployments → Logs
+---
+
+#### Error: "Database connection failed"
+
+**Cause:** Wrong connection string or database not active
+
+**Solution:**
+1. Go to Neon dashboard
+2. Verify project is active
+3. Copy connection string again
+4. Make sure it ends with `?sslmode=require`
+5. Update `DATABASE_URL` in Railway
+
+---
+
+### Deployment Errors
+
+#### Railway: "Build failed"
+
+**Cause:** Wrong Python version or missing files
+
+**Solution:**
+1. Check Railway logs for specific error
+2. Verify `server/requirements.txt` exists
+3. Make sure Python 3.9+ is specified (Railway auto-detects)
+4. Check start command is correct
+
+---
+
+#### Vercel: "Build failed"
+
+**Cause:** Node version or build configuration
+
+**Solution:**
+1. Check build logs in Vercel dashboard
+2. Verify Node.js 18+ is used
+3. Make sure `package.json` has correct scripts
+4. Try rebuilding: Deployments → "..." → Redeploy
+
+---
+
+## Security Best Practices
+
+### Before Deploying to Production
+
+**DO THIS CHECKLIST:**
+
+- [ ] Change `JWT_SECRET` to a strong random string (32+ characters)
+- [ ] Set `ALLOWED_ORIGINS` to only your Vercel domain (remove localhost)
+- [ ] Enable spending limits on OpenAI account (e.g., $5/month)
+- [ ] Never commit `.env` files to Git
+- [ ] Use different API keys for development vs. production
+- [ ] Enable MFA (multi-factor auth) on all cloud accounts
+- [ ] Set up database backups in Neon (Settings → Backups)
+- [ ] Review Qdrant access logs monthly
+
+### API Key Rotation Schedule
+
+**Every 3 months:**
+- Rotate OpenAI API key
+- Rotate Qdrant API key
+- Rotate JWT_SECRET
+
+**If leaked:**
+- Immediately revoke exposed key
+- Generate new key
+- Update environment variables
+- Check billing for unauthorized usage
+
+---
+
+## Cost Breakdown
+
+### Monthly Costs (Low Usage)
+
+| Service | Plan | Cost | Notes |
+|---------|------|------|-------|
+| **Vercel** | Free | $0 | Up to 100GB bandwidth |
+| **Railway** | Hobby | $5 | $5 free credit/month |
+| **Neon** | Free | $0 | 1 project, 0.5GB storage |
+| **Qdrant** | Free | $0 | 1GB vector storage |
+| **OpenAI** | Pay-as-you-go | $5-15 | Depends on usage |
+| **Domain (optional)** | Namecheap | $10/year | Not required |
+| **TOTAL** | | **$5-15/month** | |
+
+### How to Reduce Costs
+
+1. **Use Gemini instead of OpenAI:** FREE (but limited features)
+2. **Enable caching:** Reduces duplicate API calls
+3. **Set rate limits:** Prevent abuse
+4. **Use Railway hobby plan wisely:** $5 credit renews monthly
+5. **Monitor usage:** Check dashboards weekly
+
+### Scaling Costs (High Usage)
+
+**If you get 1000+ users:**
+
+| Service | Upgrade | Cost |
+|---------|---------|------|
+| Vercel | Pro | $20/month |
+| Railway | Pro | $20/month |
+| Neon | Pro | $19/month |
+| Qdrant | Standard | $25/month |
+| OpenAI | Batch API | $50-200/month |
+| **TOTAL** | | **$134-284/month** |
+
+---
+
+## Advanced Topics
+
+### Custom Domain Setup
+
+1. Buy domain from Namecheap/GoDaddy
+2. In Vercel: Settings → Domains → Add
+3. Follow DNS configuration instructions
+4. Update `ALLOWED_ORIGINS` to include new domain
+
+### CI/CD Pipeline
+
+The project includes GitHub Actions:
+
+- `.github/workflows/deploy.yml` - Auto-deploy on push to main
+- Runs tests before deployment
+- Vercel auto-deploys on push
+
+### Monitoring & Analytics
+
+**Recommended tools:**
+
+- **Sentry:** Error tracking (free tier)
+- **Vercel Analytics:** Page views (included)
+- **OpenAI Usage Dashboard:** API costs
+- **Railway Metrics:** Backend performance
+
+---
+
+## Getting Help
+
+### Where to Ask Questions
+
+1. **GitHub Issues:** [github.com/your-repo/issues](https://github.com)
+2. **Docusaurus Discord:** [discord.gg/docusaurus](https://discord.gg/docusaurus)
+3. **FastAPI Discord:** [discord.gg/fastapi](https://discord.gg/fastapi)
+
+### Before Asking
+
+1. Check this guide again
+2. Search existing GitHub issues
+3. Read error messages carefully
+4. Check service status pages (Railway, Vercel, OpenAI)
+
+### What to Include in Bug Reports
+
+- Error message (full text)
+- Steps to reproduce
+- Environment (local vs. production)
+- Browser/OS version
+- Screenshots/logs
+
+---
+
+## Next Steps
+
+**You've deployed successfully! Now:**
+
+1. **Customize content:** Edit chapters in `docs/`
+2. **Add features:** Extend API endpoints in `server/`
+3. **Improve UI:** Modify React components in `src/components/`
+4. **Add analytics:** Integrate Google Analytics or Vercel Analytics
+5. **Share your work:** Post on social media, get feedback!
+
+---
+
+## Appendix
+
+### Project Structure
+
+```
+physical-AI/
+├── docs/                    # 10 textbook chapters (markdown)
+├── src/
+│   ├── components/          # React components (ChatbotWidget, etc.)
+│   ├── pages/              # Custom pages (homepage)
+│   ├── css/                # Styling
+│   └── theme/              # Docusaurus theme customization
+├── server/                  # Main backend (use this one)
+│   ├── auth/               # User authentication
+│   ├── personalize/        # Content personalization
+│   ├── translate/          # Urdu translation
+│   ├── rag/                # RAG chatbot
+│   ├── agents/             # AI agents
+│   ├── tests/              # Test suite
+│   ├── main.py             # FastAPI app entry point
+│   ├── requirements.txt    # Python dependencies
+│   └── .env.example        # Environment template
+├── rag/                     # Legacy RAG backend (deprecated)
+├── .github/workflows/       # CI/CD pipelines
+├── package.json            # Frontend dependencies
+├── docusaurus.config.js    # Docusaurus configuration
+├── vercel.json             # Vercel deployment config
+├── railway.json            # Railway deployment config
+└── README.md               # Project overview
 ```
 
-### Vercel Logs
+### Environment Variables Reference
 
-```bash
-# View logs
-vercel logs
+**Complete list of all environment variables:**
 
-# Or in dashboard: https://vercel.com → Your Project → Deployments → Logs
+```env
+# Database
+DATABASE_URL                  # PostgreSQL connection string
+JWT_SECRET                    # Random string for JWT signing
+JWT_ALGORITHM                 # HS256 (default)
+ACCESS_TOKEN_EXPIRE_DAYS      # 7 (default)
+
+# AI Providers
+OPENAI_API_KEY               # OpenAI API key
+CLAUDE_API_KEY               # Anthropic Claude key (optional)
+GEMINI_API_KEY               # Google Gemini key (optional)
+
+# Vector Database
+QDRANT_URL                   # Qdrant cluster URL
+QDRANT_API_KEY               # Qdrant API key
+
+# Feature Flags
+DEMO_MODE                    # true/false
+FEATURE_TRANSLATION          # true/false
+FEATURE_PERSONALIZATION      # true/false
+FEATURE_RAG_CHAT            # true/false
+
+# CORS & Networking
+ALLOWED_ORIGINS              # Comma-separated URLs
+PORT                         # 8000 (default)
+
+# Development
+NODE_ENV                     # development/production
+LOG_LEVEL                    # INFO (default)
+DEBUG                        # true/false
 ```
 
-### Database Monitoring
+---
 
-- Neon: https://console.neon.tech → Monitoring
-- Qdrant: https://cloud.qdrant.io → Clusters → Metrics
+## Conclusion
+
+Congratulations! You've successfully deployed a production-ready AI-powered textbook with:
+
+- ✅ Interactive chatbot
+- ✅ Personalization
+- ✅ Translation
+- ✅ Scalable architecture
+- ✅ Secure configuration
+
+**Share your deployment URL and show it off!**
+
+For questions, open an issue on GitHub or consult the documentation.
+
+**Happy teaching and learning!** 🚀📚🤖
 
 ---
 
-## 💰 Cost Estimate
-
-### Free Tier Limits
-
-| Service | Free Tier | Estimated Usage | Cost |
-|---------|-----------|-----------------|------|
-| **Vercel** | 100GB bandwidth/month | ~10GB | $0 |
-| **Railway** | $5 credit/month | ~$3-4/month | $0 |
-| **Neon** | 1 project, 3GB storage | ~500MB | $0 |
-| **Qdrant** | 1GB vector storage | ~200MB | $0 |
-| **Claude API** | Pay-as-you-go | ~1000 requests/month | ~$5-10 |
-| **OpenAI API** | Pay-as-you-go | Fallback only | ~$2-5 |
-
-**Total Estimated Cost:** $7-15/month (mostly LLM API usage)
-
-### Cost Optimization Tips
-
-1. **Use Caching Aggressively**
-   - Translation cache hit rate >70% = 70% cost savings
-   - Personalization cache hit rate >60%
-
-2. **Implement Rate Limiting**
-   - Limit users to 20 translations/hour
-   - Limit chat to 50 messages/day
-
-3. **Use Cheaper Models for Simple Tasks**
-   - Haiku for simple queries
-   - Sonnet for complex transformations
-
-4. **Monitor API Usage**
-   - Set budget alerts in Anthropic/OpenAI dashboards
-   - Track usage in database logs
-
----
-
-## 🔒 Security Checklist
-
-- [ ] All secrets stored in environment variables (never in code)
-- [ ] JWT secret is strong (32+ random characters)
-- [ ] Database uses SSL (`?sslmode=require`)
-- [ ] API keys have appropriate permissions only
-- [ ] CORS configured for production domains only
-- [ ] Rate limiting enabled on backend
-- [ ] Input validation on all endpoints
-- [ ] SQL injection protection (using parameterized queries)
-- [ ] HTTPS enforced (handled by Vercel/Railway)
-- [ ] Security headers configured (X-Frame-Options, etc.)
-
----
-
-## 📚 Additional Resources
-
-- **Railway Docs:** https://docs.railway.app
-- **Vercel Docs:** https://vercel.com/docs
-- **Neon Docs:** https://neon.tech/docs
-- **Qdrant Docs:** https://qdrant.tech/documentation
-- **FastAPI Deployment:** https://fastapi.tiangolo.com/deployment
-- **Docusaurus Deployment:** https://docusaurus.io/docs/deployment
-
----
-
-## 🎯 Next Steps
-
-After deployment:
-
-1. **Test all features end-to-end**
-2. **Monitor logs for errors**
-3. **Set up budget alerts**
-4. **Create demo video (Step H)**
-5. **Prepare submission package (Step I)**
-
----
-
-**Deployment Complete!** 🎉
-
-Your Physical AI Textbook is now live and accessible worldwide!
-
-- 🌐 **Frontend:** https://your-project.vercel.app
-- 🔗 **API:** https://your-railway-app.railway.app
-- 📚 **API Docs:** https://your-railway-app.railway.app/docs
+*Last Updated: 2025-12-17*
+*Version: 3.0 - Complete Rewrite for Beginners*

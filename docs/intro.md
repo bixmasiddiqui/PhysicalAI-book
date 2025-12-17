@@ -3,15 +3,13 @@ sidebar_position: 1
 title: Introduction to Physical AI & Humanoid Robotics
 ---
 
+import DocPageActions from '@site/src/components/DocPageActions';
+
 # Introduction to Physical AI & Humanoid Robotics
 
 Welcome to the comprehensive textbook on Physical AI and Humanoid Robotics. This course will prepare you for the future of intelligent machines that can interact with and navigate the physical world.
 
-<div className="chapter-actions">
-  <button className="ai-button chat-button" onClick={() => alert('💬 AI Chatbot Feature\n\nThis button will open an AI chatbot to answer your questions about this chapter.\n\nFeatures:\n• Ask questions about chapter content\n• Get explanations and examples\n• Interactive Q&A\n\n(Demo mode - Full AI integration coming soon!)')}>💬 Ask Questions from This Chapter</button>
-  <button className="ai-button personalize-button" onClick={() => alert('✨ Personalization Feature\n\nThis will adapt the chapter to your learning style:\n\n• Adjust technical depth to your level\n• Add examples relevant to your background\n• Customize pace and content focus\n\n(Demo mode - AI personalization coming soon!)')}>✨ Personalize this Chapter for Me</button>
-  <button className="ai-button translate-button" onClick={() => alert('🌐 Translation Feature\n\nThis will translate the chapter to Urdu:\n\n• Full chapter translation\n• Technical terms explained\n• Right-to-left (RTL) layout\n\n(Demo mode - Translation feature coming soon!)')}>🌐 Translate to Urdu</button>
-</div>
+<DocPageActions chapter="intro" />
 
 ## What is Physical AI?
 
