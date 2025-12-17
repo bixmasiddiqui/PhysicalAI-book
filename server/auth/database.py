@@ -3,7 +3,7 @@ Database models for authentication and user profiles
 Uses Neon Serverless Postgres
 """
 
-from sqlalchemy import create_engine, Column, String, Integer, JSON, DateTime, Boolean, ARRAY, Text
+from sqlalchemy import create_engine, Column, String, Integer, JSON, DateTime, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@localhost/physical_ai")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./physical_ai.db")
 
 # Handle Neon's connection pooling
 if "neon.tech" in DATABASE_URL:
@@ -21,6 +21,12 @@ if "neon.tech" in DATABASE_URL:
         pool_pre_ping=True,
         pool_size=5,
         max_overflow=10
+    )
+elif "sqlite" in DATABASE_URL:
+    # SQLite-specific configuration
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
     )
 else:
     engine = create_engine(DATABASE_URL)
@@ -70,7 +76,7 @@ class PersonalizationCache(Base):
     chapter_id = Column(String(50), index=True, nullable=False)
     profile_hash = Column(String(64), index=True, nullable=False)
     personalized_content = Column(Text, nullable=False)
-    applied_transformations = Column(ARRAY(String), default=list)
+    applied_transformations = Column(JSON, default=list)  # Changed from ARRAY to JSON for SQLite compatibility
     created_at = Column(DateTime, default=datetime.utcnow)
     version = Column(Integer, default=1)
 
