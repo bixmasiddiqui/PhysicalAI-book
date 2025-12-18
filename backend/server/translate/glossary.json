@@ -1,0 +1,118 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-12-13",
+  "description": "Technical terms to preserve during translation (keep in English)",
+  "categories": {
+    "robotics": [
+      "ROS", "ROS2", "ROS1", "URDF", "RVIZ", "Gazebo", "MoveIt", "TF", "SLAM",
+      "Navigation Stack", "MoveBase", "AMCL", "GMapping", "Cartographer",
+      "TurtleBot", "PR2", "Baxter", "Fetch", "Husky", "Jackal",
+      "ros2_control", "ros_control", "controller_manager", "joint_state_controller",
+      "Robot Operating System", "Unified Robot Description Format"
+    ],
+    "programming": [
+      "Python", "C++", "JavaScript", "TypeScript", "Java", "Go", "Rust",
+      "API", "REST API", "GraphQL", "SDK", "CLI", "GUI",
+      "Git", "GitHub", "GitLab", "Docker", "Kubernetes",
+      "Node.js", "npm", "pip", "conda", "virtualenv",
+      "FastAPI", "Flask", "Django", "Express", "React", "Vue",
+      "PyTorch", "TensorFlow", "scikit-learn", "NumPy", "pandas",
+      "OpenCV", "Matplotlib", "Jupyter", "Notebook",
+      "VSCode", "PyCharm", "Sublime", "Vim", "Emacs"
+    ],
+    "hardware": [
+      "Arduino", "Raspberry Pi", "Jetson", "Jetson Nano", "Jetson Xavier",
+      "NVIDIA", "RTX", "CUDA", "cuDNN", "TensorRT",
+      "IMU", "LIDAR", "LiDAR", "GPS", "Camera", "RGB-D",
+      "Servo", "Motor", "Encoder", "Actuator", "Sensor",
+      "I2C", "SPI", "UART", "GPIO", "PWM", "ADC",
+      "Intel RealSense", "Kinect", "Hokuyo", "Velodyne"
+    ],
+    "math_kinematics": [
+      "ZMP", "Zero Moment Point", "DOF", "Degrees of Freedom",
+      "DH", "Denavit-Hartenberg", "FK", "Forward Kinematics",
+      "IK", "Inverse Kinematics", "Jacobian", "Hessian",
+      "Quaternion", "Euler", "Rotation Matrix", "Homogeneous Transform",
+      "PID", "Proportional-Integral-Derivative",
+      "Kalman Filter", "Particle Filter", "Bayes Filter",
+      "A*", "Dijkstra", "RRT", "PRM", "Potential Field"
+    ],
+    "formats_protocols": [
+      "JSON", "YAML", "XML", "CSV", "Markdown", "HTML", "CSS",
+      "URDF", "SDF", "XACRO", "Launch File",
+      "Topic", "Service", "Action", "Message", "Publisher", "Subscriber",
+      "Node", "Namespace", "Package", "Workspace", "catkin", "colcon",
+      "HTTP", "HTTPS", "WebSocket", "TCP", "UDP", "MQTT"
+    ],
+    "ml_ai": [
+      "Machine Learning", "Deep Learning", "Neural Network",
+      "CNN", "Convolutional Neural Network",
+      "RNN", "Recurrent Neural Network",
+      "LSTM", "Long Short-Term Memory",
+      "Transformer", "Attention", "BERT", "GPT",
+      "Supervised Learning", "Unsupervised Learning", "Reinforcement Learning",
+      "Q-Learning", "DQN", "PPO", "A3C", "SAC",
+      "Overfitting", "Underfitting", "Regularization", "Dropout",
+      "Backpropagation", "Gradient Descent", "Adam", "SGD"
+    ],
+    "general_cs": [
+      "Algorithm", "Data Structure", "Array", "List", "Dict", "Dictionary",
+      "Hash Table", "Tree", "Graph", "Queue", "Stack",
+      "Class", "Object", "Function", "Method", "Variable",
+      "Loop", "Conditional", "Exception", "Error", "Debug",
+      "Compile", "Runtime", "Syntax", "Semantic",
+      "Asynchronous", "Synchronous", "Thread", "Process",
+      "Cache", "Database", "Query", "Index", "Schema"
+    ],
+    "tools_platforms": [
+      "Linux", "Ubuntu", "Windows", "macOS",
+      "Terminal", "Shell", "Bash", "PowerShell",
+      "Vercel", "AWS", "Google Cloud", "Azure",
+      "PostgreSQL", "MongoDB", "Redis", "SQLite",
+      "Qdrant", "Pinecone", "Weaviate", "ChromaDB"
+    ],
+    "abbreviations": [
+      "AI", "ML", "DL", "RL", "CV", "NLP", "LLM",
+      "IoT", "OS", "CPU", "GPU", "RAM", "SSD", "USB",
+      "RGB", "HSV", "LAB", "BGR",
+      "FPS", "Hz", "kHz", "MHz", "GHz",
+      "KB", "MB", "GB", "TB",
+      "2D", "3D", "4D", "6D",
+      "CLI", "GUI", "IDE", "UI", "UX"
+    ]
+  },
+  "special_patterns": [
+    {
+      "pattern": "```.*?```",
+      "description": "Code blocks - preserve entirely"
+    },
+    {
+      "pattern": "$.*?$",
+      "description": "LaTeX inline equations - preserve entirely"
+    },
+    {
+      "pattern": "$$.*?$$",
+      "description": "LaTeX block equations - preserve entirely"
+    },
+    {
+      "pattern": "\\w+\\(\\)",
+      "description": "Function calls - preserve function names"
+    },
+    {
+      "pattern": "[A-Z][a-z]+[A-Z]\\w*",
+      "description": "CamelCase identifiers - preserve"
+    },
+    {
+      "pattern": "[a-z]+_[a-z_]+",
+      "description": "snake_case identifiers - preserve"
+    }
+  ],
+  "notes": [
+    "Terms are case-insensitive during matching",
+    "Preserve all code blocks (```...```) entirely",
+    "Preserve all LaTeX equations ($...$, $$...$$)",
+    "Keep variable names, function names, and file paths in English",
+    "Preserve all URLs and links",
+    "Keep acronyms and abbreviations in English"
+  ]
+}
